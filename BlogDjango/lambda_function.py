@@ -2,24 +2,29 @@ import json
 import boto3
 
 def lambda_handler(event, context):
-    s3 = boto3.client("s3")
+    # S3 ve DynamoDB'yi başlat
+    s3 = boto3.client('s3')
+    dynamodb = boto3.resource('dynamodb')
     
-    if event:
-        print("Event: ", event)
-        filename = str(event['Records'][0]['s3']['object']['key'])
-        timestamp = str(event['Records'][0]['eventTime'])
-        event_name = str(event['Records'][0]['eventName']).split(':')[0][6:]
+    # DynamoDB tablosunun adı
+    table_name = 'denemeson'
+    table = dynamodb.Table(table_name)
+    
+    # Olay verilerinden bucket ve dosya adı bilgilerini al
+    for record in event['Records']:
+        bucket_name = record['s3']['bucket']['name']
+        file_name = record['s3']['object']['key']
         
-        filename1 = filename.split('/')
-        filename2 = filename1[-1]
-        
-        dynamo_db = boto3.resource('dynamodb')
-        dynamoTable = dynamo_db.Table('change me!!!!!')
-        
-        dynamoTable.put_item(Item = {
-            'FileName': filename2,
-            'timestamp': timestamp,
-            'Event': event_name,
-        })
-        
-    return "Lambda success"
+        # İlgili bilgileri DynamoDB'ye kaydet
+        response = table.put_item(
+            Item={
+                'FileName': file_name,
+                'BucketName': bucket_name,
+                'Timestamp': record['eventTime']
+            }
+        )
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Success')
+    }
