@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         dynamoTable = dynamo_db.Table('change me!!!!!')
         
         dynamoTable.put_item(Item = {
-            'id': filename2,
+            'FileName': filename2,
             'timestamp': timestamp,
             'Event': event_name,
         })
